@@ -1,1 +1,12 @@
-
+{
+  "output": "dist/Server.cl",
+  "files": [
+    "src/core/Config.cl",
+    "src/core/Utilities.cl",
+    "src/systems/Database.cl",
+    "src/systems/Economy.cl",
+    "src/ui/Leaderboard.cl",
+    "src/commands/Template.cl",
+    "src/core/Main.cl"
+  ]
+}

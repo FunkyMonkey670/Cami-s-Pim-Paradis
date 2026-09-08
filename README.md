@@ -113,7 +113,7 @@ Start with the [documentation index](docs/README.md).
 | [Runtime model](docs/runtime-model.md) | Execution context, authority, state lifetime, synchronization, timing, and failure behavior. |
 | [Module index](docs/modules/README.md) | Feature and subsystem documentation. |
 | [Reference index](docs/reference/README.md) | Shared identifiers, commands, events, schemas, and other cross-module contracts. |
-| [Contributing](CONTRIBUTING.md) | Required development, validation, review, and documentation workflow. |
+| [Contributing](docs/CONTRIBUTING.md) | Required development, validation, review, and documentation workflow. |
 
 Documentation is part of the implementation. A change is incomplete when it changes a public function, command, event, state key, persistence field, UI identifier, dependency, or runtime responsibility without updating its documentation.
 
@@ -125,7 +125,7 @@ Generated section markers identify each original file inside `Server.cl`. The ac
 
 ## Contributing
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before modifying source or documentation. In particular:
+Read [CONTRIBUTING.md](docs/CONTRIBUTING.md) before modifying source or documentation. In particular:
 
 1. Determine the correct runtime authority and state owner before writing behavior.
 2. Place code in the narrowest appropriate module.

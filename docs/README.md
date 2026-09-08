@@ -92,13 +92,13 @@ Every source file must nevertheless remain a structurally complete fragment:
 The standard source header is:
 
 ```c
-# Module: Example
-# Documentation: docs/modules/example.md
-# Responsibility: One-sentence description of the module's purpose.
-# Runtime: Master authority; all clients read synchronized state.
-# Depends on: Config, Utilities
-# Used by: Main, ExampleCommand, ExampleUI
-# Persistent state: None
+// Module: Example
+// Documentation: docs/modules/example.md
+// Responsibility: One-sentence description of the module's purpose.
+// Runtime: Master authority; all clients read synchronized state.
+// Depends on: Config, Utilities
+// Used by: Main, ExampleCommand, ExampleUI
+// Persistent state: None
 ```
 
 Use the full [module documentation template](docs/templates/module.md) for substantial features.

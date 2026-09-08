@@ -5,8 +5,10 @@
     "src/core/Utilities.cl",
     "src/systems/Database.cl",
     "src/systems/Economy.cl",
+    "src/systems/GameModes.cl",
     "src/ui/Leaderboard.cl",
     "src/commands/Template.cl",
-    "src/core/Main.cl"
+    "src/core/Main.cl",
+    "src/misc/Template.cl"
   ]
 }

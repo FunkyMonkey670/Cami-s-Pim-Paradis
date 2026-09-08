@@ -9,7 +9,7 @@ The documentation is part of the project contract. Source changes that alter a d
 | Area | Document | Use it to understand |
 |---|---|---|
 | Project overview | [Root README](../README.md) | The repository layout, build commands, and contributor entry point. |
-| Contribution rules | [CONTRIBUTING.md](../CONTRIBUTING.md) | Required design, implementation, verification, and review practices. |
+| Contribution rules | [CONTRIBUTING.md](CONTRIBUTING.md) | Required design, implementation, verification, and review practices. |
 | Architecture | [architecture.md](architecture.md) | Layers, dependency direction, source boundaries, the bundling pipeline, and system ownership. |
 | Runtime | [runtime-model.md](runtime-model.md) | Execution contexts, authority, synchronization, state lifetimes, timing, and recovery. |
 | Modules | [modules/README.md](modules/README.md) | The catalog of gameplay systems, commands, UI components, integrations, and core services. |

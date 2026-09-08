@@ -18,7 +18,7 @@ Every contribution should preserve the following properties:
 
 ## Before starting work
 
-1. Read [the architecture](docs/architecture.md) and [runtime model](docs/runtime-model.md).
+1. Read [the architecture](architecture.md) WIP and [runtime model](runtime-model.md) WIP.
 2. Find the existing module page under `docs/modules/`.
 3. Find any affected registries under `docs/reference/`.
 4. Determine whether the change affects build order, initialization, authority, persistence, networking, UI, or compatibility.

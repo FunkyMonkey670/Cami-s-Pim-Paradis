@@ -1,14 +1,45 @@
 {
-  "output": "dist/Server.cl",
-  "files": [
-    "src/core/Config.cl",
-    "src/core/Utilities.cl",
-    "src/systems/Database.cl",
-    "src/systems/Economy.cl",
-    "src/systems/GameModes.cl",
-    "src/ui/Leaderboard.cl",
-    "src/commands/Template.cl",
-    "src/core/Main.cl",
-    "src/misc/Template.cl"
-  ]
+  "formatVersion": 2,
+  "target": "aottg2-map",
+
+  "logic": {
+    "output": "dist/PimParadis.logic.cl",
+    "lineMap": "dist/PimParadis.logic.cl.map.json",
+    "files": [
+      "src/core/Main.cl",
+      "src/systems/cagefight/CageFight.cl",
+      "src/systems/cagefight/CFMatchmaking.cl",
+      "src/commands/Command.cl",
+      "src/commands/CmdsNetworking.cl",
+      "src/data/MoneyData.cl",
+      "src/data/KDData.cl",
+      "src/data/GachaData.cl",
+      "src/systems/gacha/Gacha.cl",
+      "src/ui/Inventory.cl",
+      "src/ui/UITooltip.cl",
+      "assets/gacha/Descriptions.generated.cl",
+      "assets/gacha/Sprites.generated.cl"
+    ]
+  },
+
+  "map": {
+    "template": "map/PimParadis.source.txt",
+    "logicStart": "/// Logic",
+    "logicEnd": "/// Weather",
+    "output": "dist/PimParadisFull.txt"
+  },
+
+  "validation": {
+    "delimiters": true,
+    "duplicateDeclarations": true,
+    "requiredNetworkedComponents": [
+      "Slots",
+      "Bank",
+      "BlackJack",
+      "CoinMachine",
+      "DicePoker",
+      "Guillotine",
+      "Gacha"
+    ]
+  }
 }

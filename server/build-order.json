@@ -2,8 +2,8 @@
   "formatVersion": 2,
   "target": "aottg2-map",
   "lineEndings": "lf",
-  "sourceMarkers": false,
-  "header": false,
+  "sourceMarkers": true,
+  "header": true,
   "failOnEmpty": true,
   "logic": {
     "output": "dist/PimParadis.logic.cl",

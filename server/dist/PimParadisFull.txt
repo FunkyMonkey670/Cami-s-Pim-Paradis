@@ -1550,7 +1550,7 @@ Scene,Custom/casino/spongebob,2602,0,0,1,0,0,spongebob,-10.29998,-651.3809,-840.
 # BUILD UNIT 001/069 | MODULE | Main.cl
 # REPOSITORY PATH: server/src/core/Main.cl
 # DECLARATIONS: class Main
-# SOURCE LINES: 1-870
+# SOURCE LINES: 1-874
 # ##############################################################################
 class Main
 {
@@ -1796,6 +1796,7 @@ class Main
         ServerID.RemovePlayerFromStorage(player);
         Race.OnPlayerLeave(player);
         DmgRace.OnPlayerLeave(player);
+        CFMatchmaking.OnPlayerLeave(player);
         CageFight.OnPlayerLeave(player);
         HandleBakery.OnPlayerLeave(player);
     }
@@ -1857,6 +1858,7 @@ class Main
                 Game.SpawnPlayer(Network.MyPlayer, false);
             }
         }
+
         if (!Network.IsMasterClient || Game.IsEnding) {return;}
         count = self._endlessTitans.Count;
         if (self._endlessSpawning)
@@ -1890,6 +1892,7 @@ class Main
             Game.End(10.0);
             return;
         }
+        
         if (!self._waveSpawning && self._waveTitans.Count == 0) {self.NextWave();}
         if (!CageFight._enabled)
         {
@@ -2291,6 +2294,7 @@ class Main
         text += "/cam — toggle free camera" + nl;
         text += "/particle [name] and /pdisable [name] — toggle an effect" + nl;
         text += "/give [playerID] [amount] — transfer coins" + nl;
+        text += "/cf — join the cage-fight queue; /cfcancel — leave it" + nl;
         if (Network.IsMasterClient) {text += "/mode [waves|endless] — switch the world mode" + nl;}
         text += "/startrace [kills] — start a kill race";
         Game.Print(text);
@@ -2491,7 +2495,7 @@ extension TVController
 # BUILD UNIT 003/069 | MODULE | CageFight.cl
 # REPOSITORY PATH: server/src/systems/cagefight/CageFight.cl
 # DECLARATIONS: extension CageFight
-# SOURCE LINES: 1-194
+# SOURCE LINES: 1-217
 # ##############################################################################
 extension CageFight
 {
@@ -2505,6 +2509,9 @@ extension CageFight
     _round = 0;
     _p1Score = 0;
     _p2Score = 0;
+    _matchGeneration = 0;
+    _matchPlayer1ID = -1;
+    _matchPlayer2ID = -1;
     _titanSpawnPointsA = List();
     _titanSpawnPointsB = List();
 
@@ -2519,28 +2526,37 @@ extension CageFight
             return false;
         }
 
+        self._matchGeneration += 1;
+        generation = self._matchGeneration;
+        self._matchPlayer1ID = CFMatchmaking._player1.ID;
+        self._matchPlayer2ID = CFMatchmaking._player2.ID;
         self._enabled = true;
         self._transitioning = false;
         self._round = 0;
         self._p1Score = 0;
         self._p2Score = 0;
-        self.BeginRound(1);
+        self.BeginRoundForMatch(1, generation);
         return true;
     }
 
     function BeginRound(round)
     {
-        if (!self._enabled || !Network.IsMasterClient) {return;}
+        self.BeginRoundForMatch(round, self._matchGeneration);
+    }
+
+    function BeginRoundForMatch(round, generation)
+    {
+        if (!self._enabled || !Network.IsMasterClient || generation != self._matchGeneration || !self.HasCurrentPair()) {return;}
         self._transitioning = true;
         self._round = round;
         self.ClearTitans();
-        self.StartRoundAfterDelay(round);
+        self.StartRoundAfterDelay(round, generation);
     }
 
-    coroutine StartRoundAfterDelay(round)
+    coroutine StartRoundAfterDelay(round, generation)
     {
         wait self.RoundDelay;
-        if (!self._enabled || self._round != round || !CFMatchmaking.HasActiveFighters()) {return;}
+        if (!self._enabled || generation != self._matchGeneration || self._round != round || !self.HasCurrentPair() || !CFMatchmaking.HasActiveFighters()) {return;}
         CFMatchmaking.PlaceFighters();
         self.SpawnLane(self._redTitans, self._titanSpawnPointsA, TeamEnum.Blue);
         self.SpawnLane(self._blueTitans, self._titanSpawnPointsB, TeamEnum.Red);
@@ -2574,15 +2590,16 @@ extension CageFight
 
         killerPlayer = null;
         if (killer != null && killer.Type == "Human") {killerPlayer = killer.Player;}
-        if (lane == "red" && killerPlayer == CFMatchmaking._player1)
+        if (lane == "red" && CFMatchmaking.IsSamePlayer(killerPlayer, CFMatchmaking._player1))
         {
             self.SpawnOne(self._blueTitans, self._titanSpawnPointsB, TeamEnum.Red);
         }
-        elif (lane == "blue" && killerPlayer == CFMatchmaking._player2)
+        elif (lane == "blue" && CFMatchmaking.IsSamePlayer(killerPlayer, CFMatchmaking._player2))
         {
             self.SpawnOne(self._redTitans, self._titanSpawnPointsA, TeamEnum.Blue);
         }
-        elif ((lane == "red" && killerPlayer != CFMatchmaking._player1) || (lane == "blue" && killerPlayer != CFMatchmaking._player2))
+        elif ((lane == "red" && !CFMatchmaking.IsSamePlayer(killerPlayer, CFMatchmaking._player1)) ||
+            (lane == "blue" && !CFMatchmaking.IsSamePlayer(killerPlayer, CFMatchmaking._player2)))
         {
             if (lane == "red") {self.SpawnOne(self._redTitans, self._titanSpawnPointsA, TeamEnum.Blue);}
             else {self.SpawnOne(self._blueTitans, self._titanSpawnPointsB, TeamEnum.Red);}
@@ -2620,7 +2637,7 @@ extension CageFight
 
     function CheckRoundWinner()
     {
-        if (self._transitioning) {return;}
+        if (self._transitioning || !self.HasCurrentPair()) {return;}
         winner = null;
         if (self._redTitans.Count == 0) {winner = CFMatchmaking._player1; self._p1Score += 1;}
         elif (self._blueTitans.Count == 0) {winner = CFMatchmaking._player2; self._p2Score += 1;}
@@ -2635,7 +2652,7 @@ extension CageFight
             Game.PrintAll("<b><color=#f7c948>" + matchWinner.Name + " won the cage fight " + self._p1Score + "-" + self._p2Score + "!</color></b>");
             CFMatchmaking.EndMatch();
         }
-        else {self.BeginRound(self._round + 1);}
+        else {self.BeginRoundForMatch(self._round + 1, self._matchGeneration);}
     }
 
     function SpawnLane(lane, spawnPoints, titanTeam)
@@ -2666,6 +2683,12 @@ extension CageFight
             "<color=#62b7f0>[" + self._blueTitans.Count + "]</color> " + CFMatchmaking._player2.Name + " [" + self._p2Score + "]";
     }
 
+    function HasCurrentPair()
+    {
+        return CFMatchmaking._player1 != null && CFMatchmaking._player2 != null &&
+            CFMatchmaking._player1.ID == self._matchPlayer1ID && CFMatchmaking._player2.ID == self._matchPlayer2ID;
+    }
+
     function ClearTitans()
     {
         self._clearing = true;
@@ -2678,12 +2701,16 @@ extension CageFight
 
     function Reset()
     {
-        self.ClearTitans();
+        self._matchGeneration += 1;
         self._enabled = false;
+        self._transitioning = true;
+        self.ClearTitans();
         self._transitioning = false;
         self._round = 0;
         self._p1Score = 0;
         self._p2Score = 0;
+        self._matchPlayer1ID = -1;
+        self._matchPlayer2ID = -1;
         UI.SetLabelAll(UILabelEnum.TopCenter, "");
     }
 }
@@ -2692,7 +2719,7 @@ extension CageFight
 # BUILD UNIT 004/069 | MODULE | CFMatchmaking.cl
 # REPOSITORY PATH: server/src/systems/cagefight/CFMatchmaking.cl
 # DECLARATIONS: extension CFMatchmaking
-# SOURCE LINES: 1-242
+# SOURCE LINES: 1-259
 # ##############################################################################
 extension CFMatchmaking
 {
@@ -2709,6 +2736,7 @@ extension CFMatchmaking
     {
         Commands.RegisterCommand("cf", self.QueueCFCmd, "/cf: join the cage-fight queue");
         Commands.RegisterCommand("leavecf", self.LeaveCFQueue, "/leavecf: leave the cage-fight queue");
+        Commands.RegisterCommand("cfcancel", self.LeaveCFQueue, "/cfcancel: leave the cage-fight queue");
         if (Network.IsMasterClient)
         {
             Commands.RegisterCommand("cfend", self.EndCMD, "/cfend: end the active cage fight");
@@ -2739,8 +2767,8 @@ extension CFMatchmaking
     function OnPlayerSpawn(player, character)
     {
         if (!Network.IsMasterClient || !self._matchStarted || character == null) {return;}
-        if (player == self._player1) {character.Team = TeamEnum.Red;}
-        elif (player == self._player2) {character.Team = TeamEnum.Blue;}
+        if (self.IsSamePlayer(player, self._player1)) {character.Team = TeamEnum.Red;}
+        elif (self.IsSamePlayer(player, self._player2)) {character.Team = TeamEnum.Blue;}
     }
 
     function OnPlayerLeave(player)
@@ -2798,9 +2826,20 @@ extension CFMatchmaking
 
     function Dequeue(player)
     {
-        if (player == null || !self._queuedPlayers.Contains(player.ID)) {return;}
+        if (player == null) {return;}
+        if (self.IsActiveFighter(player))
+        {
+            Network.SendMessage(player, "Economy.Notice|Your cage fight is already active; /cfcancel only leaves the waiting queue.");
+            return;
+        }
+        if (!self._queuedPlayers.Contains(player.ID))
+        {
+            Network.SendMessage(player, "Economy.Notice|You are not in the cage-fight queue.");
+            return;
+        }
         self._queuedPlayers.Remove(player.ID);
         self.BroadcastQueue();
+        Network.SendMessage(player, "Economy.Notice|You left the cage-fight queue.");
     }
 
     function PruneQueue()
@@ -2809,7 +2848,7 @@ extension CFMatchmaking
         for (playerID in self._queuedPlayers)
         {
             player = Network.FindPlayer(playerID);
-            if (player != null && player.Connected && !clean.Contains(playerID)) {clean.Add(playerID);}
+            if (player != null && player.Connected && !self.IsActiveFighter(player) && !clean.Contains(playerID)) {clean.Add(playerID);}
         }
         self._queuedPlayers = clean;
     }
@@ -2874,14 +2913,19 @@ extension CFMatchmaking
 
     function IsActiveFighter(player)
     {
-        return player != null && (player == self._player1 || player == self._player2);
+        return self.IsSamePlayer(player, self._player1) || self.IsSamePlayer(player, self._player2);
     }
 
     function GetOpponent(player)
     {
-        if (player == self._player1) {return self._player2;}
-        if (player == self._player2) {return self._player1;}
+        if (self.IsSamePlayer(player, self._player1)) {return self._player2;}
+        if (self.IsSamePlayer(player, self._player2)) {return self._player1;}
         return null;
+    }
+
+    function IsSamePlayer(first, second)
+    {
+        return first != null && second != null && first.ID == second.ID;
     }
 
     function EndMatch()
@@ -4105,7 +4149,7 @@ extension Leaderboard
 # BUILD UNIT 015/069 | MODULE | RaceVisuals.cl
 # REPOSITORY PATH: server/src/systems/racing/RaceVisuals.cl
 # DECLARATIONS: extension RaceVisuals
-# SOURCE LINES: 1-29
+# SOURCE LINES: 1-39
 # ##############################################################################
 extension RaceVisuals
 {
@@ -4135,13 +4179,23 @@ extension RaceVisuals
     }
 
     function GetColor(slot) {return Color(self.GetColorHex(slot));}
+
+    function FormatElapsed(totalSeconds)
+    {
+        total = Math.Max(0, Convert.ToInt(totalSeconds));
+        minutes = Convert.ToInt(Math.Floor(total / 60));
+        seconds = total - (minutes * 60);
+        if (minutes == 0) {return seconds + "s";}
+        if (seconds < 10) {return minutes + ":0" + seconds;}
+        return minutes + ":" + seconds;
+    }
 }
 
 # ##############################################################################
 # BUILD UNIT 016/069 | MODULE | Race.cl
 # REPOSITORY PATH: server/src/systems/racing/Race.cl
 # DECLARATIONS: extension Race
-# SOURCE LINES: 1-313
+# SOURCE LINES: 1-320
 # ##############################################################################
 extension Race
 {
@@ -4195,6 +4249,7 @@ extension Race
             }
             elif (rpc == "Race.Racers" && args.Count >= 2)
             {
+                if (!self._prepStarted && !self._raceStarted) {return;}
                 self.RemoveOutlines();
                 state = Json.LoadFromString(args.Get(1));
                 if (state != null)
@@ -4212,6 +4267,7 @@ extension Race
             }
             elif (rpc == "Race.Rankings" && args.Count >= 2)
             {
+                if (!self._prepStarted && !self._raceStarted) {return;}
                 progress = Json.LoadFromString(args.Get(1));
                 if (progress != null)
                 {
@@ -4220,14 +4276,15 @@ extension Race
                     self.UpdateRaceList();
                 }
             }
-            elif (rpc == "Race.Start")
+            elif (rpc == "Race.Start" && self._prepStarted)
             {
                 self._prepStarted = false;
                 self._raceStarted = true;
                 self._countUpTimer = 0;
+                self.UpdateRaceList();
                 Game.Print("<color=#ff67ff>The kill race has started.</color>");
             }
-            elif (rpc == "Race.Progress" && args.Count >= 2)
+            elif (rpc == "Race.Progress" && args.Count >= 2 && self._raceStarted)
             {
                 self._trackedKills = Convert.ToInt(args.Get(1));
             }
@@ -4309,6 +4366,7 @@ extension Race
                     String.Newline + String.Newline + String.Newline + String.Newline;
                 UI.SetLabelForTime(UILabelEnum.BottomCenter, timerText, 1.1);
                 self._prepTimer -= 1;
+                self.UpdateRaceList();
             }
             if (Network.IsMasterClient && self._prepTimer <= 0)
             {
@@ -4326,11 +4384,7 @@ extension Race
         elif (self._raceStarted)
         {
             self._countUpTimer += 1;
-            key = Convert.ToString(Network.MyPlayer.ID);
-            if (self._trackPlayers.Contains(key))
-            {
-                UI.SetLabelForTime(UILabelEnum.MiddleRight, "Kills: " + self._trackedKills + "/" + self._killsToWin + String.Newline + self._countUpTimer + "s", 1.1);
-            }
+            self.UpdateRaceList();
         }
     }
 
@@ -4418,7 +4472,13 @@ extension Race
     {
         keys = self._trackPlayers.Keys.Copy();
         keys.SortCustom(self.CompareRankKeys);
-        text = "<b><color=#ff67ff>KILL RACE</color></b> <color=#ffd43b>First to " + self._killsToWin + "</color>" + String.Newline;
+        status = "<color=#ffd43b>Starts in " + self._prepTimer + "s</color>";
+        if (self._raceStarted)
+        {
+            status = "<color=#ffffff>TIME ELAPSED</color> <color=#ffd43b><b>" + RaceVisuals.FormatElapsed(self._countUpTimer) + "</b></color>";
+        }
+        text = status + String.Newline +
+            "<b><color=#ff67ff>KILL RACE</color></b> <color=#ffd43b>First to " + self._killsToWin + "</color>" + String.Newline;
         rank = 1;
         for (key in keys)
         {
@@ -4454,6 +4514,7 @@ extension Race
         self._processedTitans.Clear();
         self._rankingsDirty = false;
         UI.SetLabel(UILabelEnum.MiddleLeft, "");
+        UI.SetLabel(UILabelEnum.BottomCenter, "");
     }
 }
 
@@ -4461,7 +4522,7 @@ extension Race
 # BUILD UNIT 017/069 | MODULE | DmgRace.cl
 # REPOSITORY PATH: server/src/systems/racing/DmgRace.cl
 # DECLARATIONS: extension DmgRace
-# SOURCE LINES: 1-314
+# SOURCE LINES: 1-322
 # ##############################################################################
 extension DmgRace
 {
@@ -4513,6 +4574,7 @@ extension DmgRace
             }
             elif (rpc == "DmgRace.Racers" && args.Count >= 2)
             {
+                if (!self._prepStarted && !self._raceStarted) {return;}
                 self.RemoveOutlines();
                 state = Json.LoadFromString(args.Get(1));
                 if (state != null)
@@ -4530,6 +4592,7 @@ extension DmgRace
             }
             elif (rpc == "DmgRace.Rankings" && args.Count >= 2)
             {
+                if (!self._prepStarted && !self._raceStarted) {return;}
                 progress = Json.LoadFromString(args.Get(1));
                 if (progress != null)
                 {
@@ -4538,14 +4601,15 @@ extension DmgRace
                     self.UpdateRaceList();
                 }
             }
-            elif (rpc == "DmgRace.Start")
+            elif (rpc == "DmgRace.Start" && self._prepStarted)
             {
                 self._prepStarted = false;
                 self._raceStarted = true;
                 self._countUpTimer = 0;
+                self.UpdateRaceList();
                 Game.Print("<color=#64d8ff>The damage race has started.</color>");
             }
-            elif (rpc == "DmgRace.Progress" && args.Count >= 2) {self._trackedDmg = Convert.ToInt(args.Get(1));}
+            elif (rpc == "DmgRace.Progress" && args.Count >= 2 && self._raceStarted) {self._trackedDmg = Convert.ToInt(args.Get(1));}
             elif (rpc == "DmgRace.End" && args.Count >= 3)
             {
                 winner = Network.FindPlayer(Convert.ToInt(args.Get(1)));
@@ -4622,6 +4686,7 @@ extension DmgRace
                     String.Newline + String.Newline + String.Newline + String.Newline;
                 UI.SetLabelForTime(UILabelEnum.BottomCenter, timerText, 1.1);
                 self._prepTimer -= 1;
+                self.UpdateRaceList();
             }
             if (Network.IsMasterClient && self._prepTimer <= 0)
             {
@@ -4638,10 +4703,7 @@ extension DmgRace
         elif (self._raceStarted)
         {
             self._countUpTimer += 1;
-            if (self._trackPlayers.Contains(Convert.ToString(Network.MyPlayer.ID)))
-            {
-                UI.SetLabelForTime(UILabelEnum.MiddleRight, "Damage: " + self._trackedDmg + "/" + self._dmgToWin + String.Newline + self._countUpTimer + "s", 1.1);
-            }
+            self.UpdateRaceList();
         }
     }
 
@@ -4740,7 +4802,13 @@ extension DmgRace
     {
         keys = self._trackPlayers.Keys.Copy();
         keys.SortCustom(self.CompareRankKeys);
-        text = "<b><color=#64d8ff>DAMAGE RACE</color></b> <color=#ffd43b>First to " + self._dmgToWin + "</color>" + String.Newline;
+        status = "<color=#ffd43b>Starts in " + self._prepTimer + "s</color>";
+        if (self._raceStarted)
+        {
+            status = "<color=#ffffff>TIME ELAPSED</color> <color=#ffd43b><b>" + RaceVisuals.FormatElapsed(self._countUpTimer) + "</b></color>";
+        }
+        text = status + String.Newline +
+            "<b><color=#64d8ff>DAMAGE RACE</color></b> <color=#ffd43b>First to " + self._dmgToWin + "</color>" + String.Newline;
         rank = 1;
         for (key in keys)
         {
@@ -4775,6 +4843,7 @@ extension DmgRace
         self._colorSlots.Clear();
         self._dirtyProgress.Clear();
         UI.SetLabel(UILabelEnum.MiddleLeft, "");
+        UI.SetLabel(UILabelEnum.BottomCenter, "");
     }
 }
 

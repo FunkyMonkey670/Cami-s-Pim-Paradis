@@ -8,7 +8,7 @@ class Main
     # game mode config
 
     PreventAlts = false;
-    GameMode = "Waves";
+    GameMode = "Endless";
     GameModeDropbox = "Waves, Endless";
     GameModeTooltip = "World titan mode used when the lobby starts. The host can switch it later with /mode waves or /mode endless.";
     StartTitans = 8;
@@ -19,11 +19,11 @@ class Main
     GradualSpawnDelay = 0.15;
     MaxTitans = 10;
     TitanSpawnEvery = 3.0;
-    RespawnDelay = 5.0;
+    RespawnDelay = 1.0;
     ForestTitanType = "Default";
     ForestTitanTypeDropbox = "Default, Normal, Abnormal, Jumper, Crawler, Thrower, Punk, Random";
     ForestTitanTypeTooltip = "Titan type spawned by the Waves and Endless world modes.";
-    ForestTitanSizeMin = 1.0;
+    ForestTitanSizeMin = 2.5;
     ForestTitanSizeMinTooltip = "Minimum size for world-mode titans. Values are clamped above zero.";
     ForestTitanSizeMax = 3.0;
     ForestTitanSizeMaxTooltip = "Maximum size for world-mode titans. Reversed min/max values are handled safely.";
@@ -32,9 +32,9 @@ class Main
     CageFightTitanType = "Default";
     CageFightTitanTypeDropbox = "Default, Normal, Abnormal, Jumper, Crawler, Thrower, Punk, Random";
     CageFightTitanTypeTooltip = "Titan type used only inside cage-fight lanes.";
-    CageFightTitanSizeMin = 1.0;
+    CageFightTitanSizeMin = 2.5;
     CageFightTitanSizeMinTooltip = "Minimum size for cage-fight titans.";
-    CageFightTitanSizeMax = 2.0;
+    CageFightTitanSizeMax = 3.0;
     CageFightTitanSizeMaxTooltip = "Maximum size for cage-fight titans.";
     _wavesEnabled = true;
     _endlessEnabled = false;

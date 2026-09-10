@@ -1,6 +1,6 @@
 extension HandleBakery
 {
-    SellReward = 50;
+    SellReward = 200;
     InteractionDistance = 15.0;
     RequestCooldown = 0.25;
 
@@ -325,7 +325,6 @@ extension HandleBakery
         self._serverActionSerial.Set(player.ID, Convert.ToInt(self._serverActionSerial.Get(player.ID, 0)) + 1);
     }
 
-    # Compatibility helpers for legacy map calls.
     function AddItem(item) {if (item != null) {self._items.Set(item.Name, self.GetCount(item.Name) + Math.Max(0, item.Count));}}
     function RemoveItem(item) {if (item != null) {self._items.Set(item.Name, Math.Max(0, self.GetCount(item.Name) - 1));}}
     function Sell() {self._requestPending = true; Network.SendMessage(Network.MasterClient, "Bakery.Action|sell");}

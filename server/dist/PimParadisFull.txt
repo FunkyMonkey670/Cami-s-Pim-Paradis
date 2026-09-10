@@ -1857,11 +1857,11 @@ class Main
                 Game.SpawnPlayer(Network.MyPlayer, false);
             }
         }
-        if (!Network.IsMasterClient || Game.IsEnding || CageFight._enabled) {return;}
+        if (!Network.IsMasterClient || Game.IsEnding) {return;}
         count = self._endlessTitans.Count;
         if (self._endlessSpawning)
         {
-            UI.SetLabelAll(UILabelEnum.TopCenter, "Titans: " + count + " | Endless");
+            if (!CageFight._enabled) {UI.SetLabelAll(UILabelEnum.TopCenter, "Titans: " + count + " | Endless");}
             return;
         }
         if (count < self.MaxTitans)
@@ -1875,7 +1875,7 @@ class Main
             }
         }
         else {self._spawnTimeLeft = self.TitanSpawnEvery;}
-        UI.SetLabelAll(UILabelEnum.TopCenter, "Titans: " + self._endlessTitans.Count + " | Endless");
+        if (!CageFight._enabled) {UI.SetLabelAll(UILabelEnum.TopCenter, "Titans: " + self._endlessTitans.Count + " | Endless");}
     }
 
     function UpdateWaves()
@@ -1890,7 +1890,7 @@ class Main
             Game.End(10.0);
             return;
         }
-        if (!self._waveSpawning && self._waveTitans.Count == 0 && !CageFight._enabled) {self.NextWave();}
+        if (!self._waveSpawning && self._waveTitans.Count == 0) {self.NextWave();}
         if (!CageFight._enabled)
         {
             UI.SetLabelAll(UILabelEnum.TopCenter, "Titans Left: " + self._waveTitans.Count + "  Wave: " + self._currentWave);
@@ -2046,7 +2046,7 @@ class Main
         self._currentWave = 0;
         self._hasSpawned = false;
         self.ApplyModeState(nextMode);
-        if (self._wavesEnabled && !CageFight._enabled) {self.NextWave();}
+        if (self._wavesEnabled) {self.NextWave();}
         elif (self._endlessEnabled) {self.StartEndless();}
         Network.SendMessageAll("Mode.Changed|" + self.GameMode);
         Game.PrintAll("<color=#ffd166>World mode changed to <b>" + self.GameMode + "</b>.</color>");
@@ -2491,7 +2491,7 @@ extension TVController
 # BUILD UNIT 003/069 | MODULE | CageFight.cl
 # REPOSITORY PATH: server/src/systems/cagefight/CageFight.cl
 # DECLARATIONS: extension CageFight
-# SOURCE LINES: 1-197
+# SOURCE LINES: 1-194
 # ##############################################################################
 extension CageFight
 {
@@ -2612,9 +2612,6 @@ extension CageFight
     function TargetLane(titans, player)
     {
         if (player == null || player.Character == null) {return;}
-        # The CL evaluator only accepts List values in for-loops. Cage lanes are
-        # Sets so they can reject duplicate Titan references, therefore iterate
-        # over a stable List snapshot instead.
         for (titan in titans.ToList())
         {
             if (titan != null) {titan.Target(player.Character, Math.Infinity);}
@@ -4108,12 +4105,10 @@ extension Leaderboard
 # BUILD UNIT 015/069 | MODULE | RaceVisuals.cl
 # REPOSITORY PATH: server/src/systems/racing/RaceVisuals.cl
 # DECLARATIONS: extension RaceVisuals
-# SOURCE LINES: 1-31
+# SOURCE LINES: 1-29
 # ##############################################################################
 extension RaceVisuals
 {
-    # Stable participant colors shared by kill races and damage races. Slots are
-    # assigned by the master client and synchronized with the participant list.
     _palette = List(
         "#ff4d6d", "#4dabf7", "#ffd43b", "#69db7c", "#da77f2", "#ff922b",
         "#38d9a9", "#748ffc", "#f783ac", "#a9e34b", "#66d9e8", "#e599f7",
@@ -5169,7 +5164,7 @@ extension CardTrading
 # BUILD UNIT 022/069 | MODULE | HandleBakery.cl
 # REPOSITORY PATH: server/src/systems/bakery/HandleBakery.cl
 # DECLARATIONS: extension HandleBakery
-# SOURCE LINES: 1-337
+# SOURCE LINES: 1-336
 # ##############################################################################
 extension HandleBakery
 {
@@ -5498,7 +5493,6 @@ extension HandleBakery
         self._serverActionSerial.Set(player.ID, Convert.ToInt(self._serverActionSerial.Get(player.ID, 0)) + 1);
     }
 
-    # Compatibility helpers for legacy map calls.
     function AddItem(item) {if (item != null) {self._items.Set(item.Name, self.GetCount(item.Name) + Math.Max(0, item.Count));}}
     function RemoveItem(item) {if (item != null) {self._items.Set(item.Name, Math.Max(0, self.GetCount(item.Name) - 1));}}
     function Sell() {self._requestPending = true; Network.SendMessage(Network.MasterClient, "Bakery.Action|sell");}

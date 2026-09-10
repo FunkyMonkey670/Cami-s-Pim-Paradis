@@ -303,11 +303,11 @@ class Main
                 Game.SpawnPlayer(Network.MyPlayer, false);
             }
         }
-        if (!Network.IsMasterClient || Game.IsEnding || CageFight._enabled) {return;}
+        if (!Network.IsMasterClient || Game.IsEnding) {return;}
         count = self._endlessTitans.Count;
         if (self._endlessSpawning)
         {
-            UI.SetLabelAll(UILabelEnum.TopCenter, "Titans: " + count + " | Endless");
+            if (!CageFight._enabled) {UI.SetLabelAll(UILabelEnum.TopCenter, "Titans: " + count + " | Endless");}
             return;
         }
         if (count < self.MaxTitans)
@@ -321,7 +321,7 @@ class Main
             }
         }
         else {self._spawnTimeLeft = self.TitanSpawnEvery;}
-        UI.SetLabelAll(UILabelEnum.TopCenter, "Titans: " + self._endlessTitans.Count + " | Endless");
+        if (!CageFight._enabled) {UI.SetLabelAll(UILabelEnum.TopCenter, "Titans: " + self._endlessTitans.Count + " | Endless");}
     }
 
     function UpdateWaves()
@@ -336,7 +336,7 @@ class Main
             Game.End(10.0);
             return;
         }
-        if (!self._waveSpawning && self._waveTitans.Count == 0 && !CageFight._enabled) {self.NextWave();}
+        if (!self._waveSpawning && self._waveTitans.Count == 0) {self.NextWave();}
         if (!CageFight._enabled)
         {
             UI.SetLabelAll(UILabelEnum.TopCenter, "Titans Left: " + self._waveTitans.Count + "  Wave: " + self._currentWave);
@@ -492,7 +492,7 @@ class Main
         self._currentWave = 0;
         self._hasSpawned = false;
         self.ApplyModeState(nextMode);
-        if (self._wavesEnabled && !CageFight._enabled) {self.NextWave();}
+        if (self._wavesEnabled) {self.NextWave();}
         elif (self._endlessEnabled) {self.StartEndless();}
         Network.SendMessageAll("Mode.Changed|" + self.GameMode);
         Game.PrintAll("<color=#ffd166>World mode changed to <b>" + self.GameMode + "</b>.</color>");

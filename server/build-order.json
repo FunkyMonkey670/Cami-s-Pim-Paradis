@@ -23,6 +23,7 @@
       "src/data/MoneyData.cl",
       "src/data/KDData.cl",
       "src/ui/Leaderboard.cl",
+      "src/systems/racing/RaceVisuals.cl",
       "src/systems/racing/Race.cl",
       "src/systems/racing/DmgRace.cl",
       "src/ui/StaminaBar.cl",

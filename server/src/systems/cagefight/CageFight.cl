@@ -117,7 +117,7 @@ extension CageFight
     function TargetLane(titans, player)
     {
         if (player == null || player.Character == null) {return;}
-        for (titan in titans)
+        for (titan in titans.ToList())
         {
             if (titan != null) {titan.Target(player.Character, Math.Infinity);}
         }

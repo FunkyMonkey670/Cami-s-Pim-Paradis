@@ -745,8 +745,8 @@ component TexasHoldEmPoker
     {
         recipients = Set();
         for (playerID in self.GetSeatedPlayerIDs()) {recipients.Add(playerID);}
-        for (playerID in self._viewers) {recipients.Add(playerID);}
-        for (playerID in recipients)
+        for (playerID in self._viewers.ToList()) {recipients.Add(playerID);}
+        for (playerID in recipients.ToList())
         {
             player = Network.FindPlayer(playerID);
             if (player != null) {self.SendState(player, message, reveal);}

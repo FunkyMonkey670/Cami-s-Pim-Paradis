@@ -13,6 +13,7 @@ extension CFMatchmaking
     {
         Commands.RegisterCommand("cf", self.QueueCFCmd, "/cf: join the cage-fight queue");
         Commands.RegisterCommand("leavecf", self.LeaveCFQueue, "/leavecf: leave the cage-fight queue");
+        Commands.RegisterCommand("cfcancel", self.LeaveCFQueue, "/cfcancel: leave the cage-fight queue");
         if (Network.IsMasterClient)
         {
             Commands.RegisterCommand("cfend", self.EndCMD, "/cfend: end the active cage fight");
@@ -43,8 +44,8 @@ extension CFMatchmaking
     function OnPlayerSpawn(player, character)
     {
         if (!Network.IsMasterClient || !self._matchStarted || character == null) {return;}
-        if (player == self._player1) {character.Team = TeamEnum.Red;}
-        elif (player == self._player2) {character.Team = TeamEnum.Blue;}
+        if (self.IsSamePlayer(player, self._player1)) {character.Team = TeamEnum.Red;}
+        elif (self.IsSamePlayer(player, self._player2)) {character.Team = TeamEnum.Blue;}
     }
 
     function OnPlayerLeave(player)
@@ -102,9 +103,20 @@ extension CFMatchmaking
 
     function Dequeue(player)
     {
-        if (player == null || !self._queuedPlayers.Contains(player.ID)) {return;}
+        if (player == null) {return;}
+        if (self.IsActiveFighter(player))
+        {
+            Network.SendMessage(player, "Economy.Notice|Your cage fight is already active; /cfcancel only leaves the waiting queue.");
+            return;
+        }
+        if (!self._queuedPlayers.Contains(player.ID))
+        {
+            Network.SendMessage(player, "Economy.Notice|You are not in the cage-fight queue.");
+            return;
+        }
         self._queuedPlayers.Remove(player.ID);
         self.BroadcastQueue();
+        Network.SendMessage(player, "Economy.Notice|You left the cage-fight queue.");
     }
 
     function PruneQueue()
@@ -113,7 +125,7 @@ extension CFMatchmaking
         for (playerID in self._queuedPlayers)
         {
             player = Network.FindPlayer(playerID);
-            if (player != null && player.Connected && !clean.Contains(playerID)) {clean.Add(playerID);}
+            if (player != null && player.Connected && !self.IsActiveFighter(player) && !clean.Contains(playerID)) {clean.Add(playerID);}
         }
         self._queuedPlayers = clean;
     }
@@ -178,14 +190,19 @@ extension CFMatchmaking
 
     function IsActiveFighter(player)
     {
-        return player != null && (player == self._player1 || player == self._player2);
+        return self.IsSamePlayer(player, self._player1) || self.IsSamePlayer(player, self._player2);
     }
 
     function GetOpponent(player)
     {
-        if (player == self._player1) {return self._player2;}
-        if (player == self._player2) {return self._player1;}
+        if (self.IsSamePlayer(player, self._player1)) {return self._player2;}
+        if (self.IsSamePlayer(player, self._player2)) {return self._player1;}
         return null;
+    }
+
+    function IsSamePlayer(first, second)
+    {
+        return first != null && second != null && first.ID == second.ID;
     }
 
     function EndMatch()

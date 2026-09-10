@@ -26,4 +26,14 @@ extension RaceVisuals
     }
 
     function GetColor(slot) {return Color(self.GetColorHex(slot));}
+
+    function FormatElapsed(totalSeconds)
+    {
+        total = Math.Max(0, Convert.ToInt(totalSeconds));
+        minutes = Convert.ToInt(Math.Floor(total / 60));
+        seconds = total - (minutes * 60);
+        if (minutes == 0) {return seconds + "s";}
+        if (seconds < 10) {return minutes + ":0" + seconds;}
+        return minutes + ":" + seconds;
+    }
 }

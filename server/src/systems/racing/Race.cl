@@ -50,6 +50,7 @@ extension Race
             }
             elif (rpc == "Race.Racers" && args.Count >= 2)
             {
+                if (!self._prepStarted && !self._raceStarted) {return;}
                 self.RemoveOutlines();
                 state = Json.LoadFromString(args.Get(1));
                 if (state != null)
@@ -67,6 +68,7 @@ extension Race
             }
             elif (rpc == "Race.Rankings" && args.Count >= 2)
             {
+                if (!self._prepStarted && !self._raceStarted) {return;}
                 progress = Json.LoadFromString(args.Get(1));
                 if (progress != null)
                 {
@@ -75,14 +77,15 @@ extension Race
                     self.UpdateRaceList();
                 }
             }
-            elif (rpc == "Race.Start")
+            elif (rpc == "Race.Start" && self._prepStarted)
             {
                 self._prepStarted = false;
                 self._raceStarted = true;
                 self._countUpTimer = 0;
+                self.UpdateRaceList();
                 Game.Print("<color=#ff67ff>The kill race has started.</color>");
             }
-            elif (rpc == "Race.Progress" && args.Count >= 2)
+            elif (rpc == "Race.Progress" && args.Count >= 2 && self._raceStarted)
             {
                 self._trackedKills = Convert.ToInt(args.Get(1));
             }
@@ -164,6 +167,7 @@ extension Race
                     String.Newline + String.Newline + String.Newline + String.Newline;
                 UI.SetLabelForTime(UILabelEnum.BottomCenter, timerText, 1.1);
                 self._prepTimer -= 1;
+                self.UpdateRaceList();
             }
             if (Network.IsMasterClient && self._prepTimer <= 0)
             {
@@ -181,11 +185,7 @@ extension Race
         elif (self._raceStarted)
         {
             self._countUpTimer += 1;
-            key = Convert.ToString(Network.MyPlayer.ID);
-            if (self._trackPlayers.Contains(key))
-            {
-                UI.SetLabelForTime(UILabelEnum.MiddleRight, "Kills: " + self._trackedKills + "/" + self._killsToWin + String.Newline + self._countUpTimer + "s", 1.1);
-            }
+            self.UpdateRaceList();
         }
     }
 
@@ -273,7 +273,13 @@ extension Race
     {
         keys = self._trackPlayers.Keys.Copy();
         keys.SortCustom(self.CompareRankKeys);
-        text = "<b><color=#ff67ff>KILL RACE</color></b> <color=#ffd43b>First to " + self._killsToWin + "</color>" + String.Newline;
+        status = "<color=#ffd43b>Starts in " + self._prepTimer + "s</color>";
+        if (self._raceStarted)
+        {
+            status = "<color=#ffffff>TIME ELAPSED</color> <color=#ffd43b><b>" + RaceVisuals.FormatElapsed(self._countUpTimer) + "</b></color>";
+        }
+        text = status + String.Newline +
+            "<b><color=#ff67ff>KILL RACE</color></b> <color=#ffd43b>First to " + self._killsToWin + "</color>" + String.Newline;
         rank = 1;
         for (key in keys)
         {
@@ -309,5 +315,6 @@ extension Race
         self._processedTitans.Clear();
         self._rankingsDirty = false;
         UI.SetLabel(UILabelEnum.MiddleLeft, "");
+        UI.SetLabel(UILabelEnum.BottomCenter, "");
     }
 }

@@ -48,6 +48,7 @@ extension DmgRace
             }
             elif (rpc == "DmgRace.Racers" && args.Count >= 2)
             {
+                if (!self._prepStarted && !self._raceStarted) {return;}
                 self.RemoveOutlines();
                 state = Json.LoadFromString(args.Get(1));
                 if (state != null)
@@ -65,6 +66,7 @@ extension DmgRace
             }
             elif (rpc == "DmgRace.Rankings" && args.Count >= 2)
             {
+                if (!self._prepStarted && !self._raceStarted) {return;}
                 progress = Json.LoadFromString(args.Get(1));
                 if (progress != null)
                 {
@@ -73,14 +75,15 @@ extension DmgRace
                     self.UpdateRaceList();
                 }
             }
-            elif (rpc == "DmgRace.Start")
+            elif (rpc == "DmgRace.Start" && self._prepStarted)
             {
                 self._prepStarted = false;
                 self._raceStarted = true;
                 self._countUpTimer = 0;
+                self.UpdateRaceList();
                 Game.Print("<color=#64d8ff>The damage race has started.</color>");
             }
-            elif (rpc == "DmgRace.Progress" && args.Count >= 2) {self._trackedDmg = Convert.ToInt(args.Get(1));}
+            elif (rpc == "DmgRace.Progress" && args.Count >= 2 && self._raceStarted) {self._trackedDmg = Convert.ToInt(args.Get(1));}
             elif (rpc == "DmgRace.End" && args.Count >= 3)
             {
                 winner = Network.FindPlayer(Convert.ToInt(args.Get(1)));
@@ -157,6 +160,7 @@ extension DmgRace
                     String.Newline + String.Newline + String.Newline + String.Newline;
                 UI.SetLabelForTime(UILabelEnum.BottomCenter, timerText, 1.1);
                 self._prepTimer -= 1;
+                self.UpdateRaceList();
             }
             if (Network.IsMasterClient && self._prepTimer <= 0)
             {
@@ -173,10 +177,7 @@ extension DmgRace
         elif (self._raceStarted)
         {
             self._countUpTimer += 1;
-            if (self._trackPlayers.Contains(Convert.ToString(Network.MyPlayer.ID)))
-            {
-                UI.SetLabelForTime(UILabelEnum.MiddleRight, "Damage: " + self._trackedDmg + "/" + self._dmgToWin + String.Newline + self._countUpTimer + "s", 1.1);
-            }
+            self.UpdateRaceList();
         }
     }
 
@@ -275,7 +276,13 @@ extension DmgRace
     {
         keys = self._trackPlayers.Keys.Copy();
         keys.SortCustom(self.CompareRankKeys);
-        text = "<b><color=#64d8ff>DAMAGE RACE</color></b> <color=#ffd43b>First to " + self._dmgToWin + "</color>" + String.Newline;
+        status = "<color=#ffd43b>Starts in " + self._prepTimer + "s</color>";
+        if (self._raceStarted)
+        {
+            status = "<color=#ffffff>TIME ELAPSED</color> <color=#ffd43b><b>" + RaceVisuals.FormatElapsed(self._countUpTimer) + "</b></color>";
+        }
+        text = status + String.Newline +
+            "<b><color=#64d8ff>DAMAGE RACE</color></b> <color=#ffd43b>First to " + self._dmgToWin + "</color>" + String.Newline;
         rank = 1;
         for (key in keys)
         {
@@ -310,5 +317,6 @@ extension DmgRace
         self._colorSlots.Clear();
         self._dirtyProgress.Clear();
         UI.SetLabel(UILabelEnum.MiddleLeft, "");
+        UI.SetLabel(UILabelEnum.BottomCenter, "");
     }
 }

@@ -242,6 +242,7 @@ class Main
         ServerID.RemovePlayerFromStorage(player);
         Race.OnPlayerLeave(player);
         DmgRace.OnPlayerLeave(player);
+        CFMatchmaking.OnPlayerLeave(player);
         CageFight.OnPlayerLeave(player);
         HandleBakery.OnPlayerLeave(player);
     }
@@ -303,6 +304,7 @@ class Main
                 Game.SpawnPlayer(Network.MyPlayer, false);
             }
         }
+
         if (!Network.IsMasterClient || Game.IsEnding) {return;}
         count = self._endlessTitans.Count;
         if (self._endlessSpawning)
@@ -336,6 +338,7 @@ class Main
             Game.End(10.0);
             return;
         }
+        
         if (!self._waveSpawning && self._waveTitans.Count == 0) {self.NextWave();}
         if (!CageFight._enabled)
         {
@@ -737,6 +740,7 @@ class Main
         text += "/cam — toggle free camera" + nl;
         text += "/particle [name] and /pdisable [name] — toggle an effect" + nl;
         text += "/give [playerID] [amount] — transfer coins" + nl;
+        text += "/cf — join the cage-fight queue; /cfcancel — leave it" + nl;
         if (Network.IsMasterClient) {text += "/mode [waves|endless] — switch the world mode" + nl;}
         text += "/startrace [kills] — start a kill race";
         Game.Print(text);

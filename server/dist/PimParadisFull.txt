@@ -1542,12 +1542,12 @@ Scene,Custom/casino/spongebob,2602,0,0,1,0,0,spongebob,-10.29998,-651.3809,-840.
 # CAMI'S PIM PARADIS - GENERATED MAP LOGIC
 # DO NOT EDIT THIS BUNDLED FILE; EDIT THE REPOSITORY SOURCE FILES INSTEAD
 # BUILD MANIFEST: server/build-order.json
-# ORDERED BUILD UNITS: 68
+# ORDERED BUILD UNITS: 69
 # ERROR LOOKUP: tools\cl-bundler.cmd map <PimParadisFull runtime line>
 # ##############################################################################
 
 # ##############################################################################
-# BUILD UNIT 001/068 | MODULE | Main.cl
+# BUILD UNIT 001/069 | MODULE | Main.cl
 # REPOSITORY PATH: server/src/core/Main.cl
 # DECLARATIONS: class Main
 # SOURCE LINES: 1-870
@@ -2424,7 +2424,7 @@ class Main
 }
 
 # ##############################################################################
-# BUILD UNIT 002/068 | MODULE | TVController.cl
+# BUILD UNIT 002/069 | MODULE | TVController.cl
 # REPOSITORY PATH: server/src/components/world/TVController.cl
 # DECLARATIONS: extension TVController
 # SOURCE LINES: 1-57
@@ -2488,10 +2488,10 @@ extension TVController
 }
 
 # ##############################################################################
-# BUILD UNIT 003/068 | MODULE | CageFight.cl
+# BUILD UNIT 003/069 | MODULE | CageFight.cl
 # REPOSITORY PATH: server/src/systems/cagefight/CageFight.cl
 # DECLARATIONS: extension CageFight
-# SOURCE LINES: 1-194
+# SOURCE LINES: 1-197
 # ##############################################################################
 extension CageFight
 {
@@ -2612,7 +2612,10 @@ extension CageFight
     function TargetLane(titans, player)
     {
         if (player == null || player.Character == null) {return;}
-        for (titan in titans)
+        # The CL evaluator only accepts List values in for-loops. Cage lanes are
+        # Sets so they can reject duplicate Titan references, therefore iterate
+        # over a stable List snapshot instead.
+        for (titan in titans.ToList())
         {
             if (titan != null) {titan.Target(player.Character, Math.Infinity);}
         }
@@ -2689,7 +2692,7 @@ extension CageFight
 }
 
 # ##############################################################################
-# BUILD UNIT 004/068 | MODULE | CFMatchmaking.cl
+# BUILD UNIT 004/069 | MODULE | CFMatchmaking.cl
 # REPOSITORY PATH: server/src/systems/cagefight/CFMatchmaking.cl
 # DECLARATIONS: extension CFMatchmaking
 # SOURCE LINES: 1-242
@@ -2938,7 +2941,7 @@ extension CFMatchmaking
 }
 
 # ##############################################################################
-# BUILD UNIT 005/068 | MODULE | Command.cl
+# BUILD UNIT 005/069 | MODULE | Command.cl
 # REPOSITORY PATH: server/src/commands/Command.cl
 # DECLARATIONS: extension Command
 # SOURCE LINES: 1-29
@@ -2974,7 +2977,7 @@ extension Command
 }
 
 # ##############################################################################
-# BUILD UNIT 006/068 | MODULE | CmdsNetworking.cl
+# BUILD UNIT 006/069 | MODULE | CmdsNetworking.cl
 # REPOSITORY PATH: server/src/commands/CmdsNetworking.cl
 # DECLARATIONS: extension CmdsNetworking
 # SOURCE LINES: 1-95
@@ -3076,7 +3079,7 @@ extension CmdsNetworking
 }
 
 # ##############################################################################
-# BUILD UNIT 007/068 | MODULE | BodySizeManager.cl
+# BUILD UNIT 007/069 | MODULE | BodySizeManager.cl
 # REPOSITORY PATH: server/src/components/player/BodySizeManager.cl
 # DECLARATIONS: extension BodySizeManager
 # SOURCE LINES: 1-78
@@ -3161,7 +3164,7 @@ extension BodySizeManager
 }
 
 # ##############################################################################
-# BUILD UNIT 008/068 | MODULE | TextUtil.cl
+# BUILD UNIT 008/069 | MODULE | TextUtil.cl
 # REPOSITORY PATH: server/src/core/TextUtil.cl
 # DECLARATIONS: extension TextUtil
 # SOURCE LINES: 1-33
@@ -3201,7 +3204,7 @@ extension TextUtil
 }
 
 # ##############################################################################
-# BUILD UNIT 009/068 | MODULE | ServerID.cl
+# BUILD UNIT 009/069 | MODULE | ServerID.cl
 # REPOSITORY PATH: server/src/data/ServerID.cl
 # DECLARATIONS: extension ServerID
 # SOURCE LINES: 1-370
@@ -3578,7 +3581,7 @@ extension ServerID
 }
 
 # ##############################################################################
-# BUILD UNIT 010/068 | MODULE | PrivateFileManager.cl
+# BUILD UNIT 010/069 | MODULE | PrivateFileManager.cl
 # REPOSITORY PATH: server/src/data/PrivateFileManager.cl
 # DECLARATIONS: extension PrivateFileManager
 # SOURCE LINES: 1-21
@@ -3606,7 +3609,7 @@ extension PrivateFileManager
 }
 
 # ##############################################################################
-# BUILD UNIT 011/068 | MODULE | PData.cl
+# BUILD UNIT 011/069 | MODULE | PData.cl
 # REPOSITORY PATH: server/src/data/PData.cl
 # DECLARATIONS: extension PData
 # SOURCE LINES: 1-45
@@ -3658,7 +3661,7 @@ extension PData
 }
 
 # ##############################################################################
-# BUILD UNIT 012/068 | MODULE | MoneyData.cl
+# BUILD UNIT 012/069 | MODULE | MoneyData.cl
 # REPOSITORY PATH: server/src/data/MoneyData.cl
 # DECLARATIONS: extension MoneyData
 # SOURCE LINES: 1-218
@@ -3883,7 +3886,7 @@ extension MoneyData
 }
 
 # ##############################################################################
-# BUILD UNIT 013/068 | MODULE | KDData.cl
+# BUILD UNIT 013/069 | MODULE | KDData.cl
 # REPOSITORY PATH: server/src/data/KDData.cl
 # DECLARATIONS: extension KDData
 # SOURCE LINES: 1-127
@@ -4017,7 +4020,7 @@ extension KDData
 }
 
 # ##############################################################################
-# BUILD UNIT 014/068 | MODULE | Leaderboard.cl
+# BUILD UNIT 014/069 | MODULE | Leaderboard.cl
 # REPOSITORY PATH: server/src/ui/Leaderboard.cl
 # DECLARATIONS: extension Leaderboard
 # SOURCE LINES: 1-78
@@ -4102,10 +4105,48 @@ extension Leaderboard
 }
 
 # ##############################################################################
-# BUILD UNIT 015/068 | MODULE | Race.cl
+# BUILD UNIT 015/069 | MODULE | RaceVisuals.cl
+# REPOSITORY PATH: server/src/systems/racing/RaceVisuals.cl
+# DECLARATIONS: extension RaceVisuals
+# SOURCE LINES: 1-31
+# ##############################################################################
+extension RaceVisuals
+{
+    # Stable participant colors shared by kill races and damage races. Slots are
+    # assigned by the master client and synchronized with the participant list.
+    _palette = List(
+        "#ff4d6d", "#4dabf7", "#ffd43b", "#69db7c", "#da77f2", "#ff922b",
+        "#38d9a9", "#748ffc", "#f783ac", "#a9e34b", "#66d9e8", "#e599f7",
+        "#ff8787", "#74c0fc", "#b197fc", "#ffc078", "#63e6be", "#91a7ff",
+        "#faa2c1", "#c0eb75", "#3bc9db", "#d0bfff", "#f06595", "#20c997"
+    );
+
+    function FindAvailableSlot(assignments)
+    {
+        used = Set();
+        for (slot in assignments.Values) {used.Add(Convert.ToInt(slot));}
+        for (i in Range(self._palette.Count))
+        {
+            if (!used.Contains(i)) {return i;}
+        }
+        return self._palette.Count;
+    }
+
+    function GetColorHex(slot)
+    {
+        index = Convert.ToInt(slot);
+        if (index >= 0 && index < self._palette.Count) {return self._palette.Get(index);}
+        return "#ffffff";
+    }
+
+    function GetColor(slot) {return Color(self.GetColorHex(slot));}
+}
+
+# ##############################################################################
+# BUILD UNIT 016/069 | MODULE | Race.cl
 # REPOSITORY PATH: server/src/systems/racing/Race.cl
 # DECLARATIONS: extension Race
-# SOURCE LINES: 1-226
+# SOURCE LINES: 1-313
 # ##############################################################################
 extension Race
 {
@@ -4119,6 +4160,8 @@ extension Race
     _trackedKills = 0;
     _trackPlayers = Dict();
     _progress = Dict();
+    _colorSlots = Dict();
+    _rankingsDirty = false;
     _countUpTimer = 0;
     _killsToWin = 50;
     _processedTitans = Set();
@@ -4158,9 +4201,29 @@ extension Race
             elif (rpc == "Race.Racers" && args.Count >= 2)
             {
                 self.RemoveOutlines();
-                racers = Json.LoadFromString(args.Get(1));
-                if (racers != null) {self._trackPlayers = racers;}
+                state = Json.LoadFromString(args.Get(1));
+                if (state != null)
+                {
+                    racers = state.Get("Players", null);
+                    progress = state.Get("Progress", null);
+                    colors = state.Get("Colors", null);
+                    if (racers != null) {self._trackPlayers = racers;}
+                    if (progress != null) {self._progress = progress;}
+                    if (colors != null) {self._colorSlots = colors;}
+                    self.UpdateTrackedKills();
+                }
                 self.ApplyOutlines();
+                self.UpdateRaceList();
+            }
+            elif (rpc == "Race.Rankings" && args.Count >= 2)
+            {
+                progress = Json.LoadFromString(args.Get(1));
+                if (progress != null)
+                {
+                    self._progress = progress;
+                    self.UpdateTrackedKills();
+                    self.UpdateRaceList();
+                }
             }
             elif (rpc == "Race.Start")
             {
@@ -4211,22 +4274,45 @@ extension Race
     {
         if (player == null) {return;}
         key = Convert.ToString(player.ID);
+        if (self._trackPlayers.Contains(key))
+        {
+            self._trackPlayers.Set(key, player.Name);
+            return;
+        }
         self._trackPlayers.Set(key, player.Name);
         self._progress.Set(key, 0);
+        self._colorSlots.Set(key, RaceVisuals.FindAvailableSlot(self._colorSlots));
     }
 
     function SyncRacers()
     {
-        if (Network.IsMasterClient) {Network.SendMessageAll("Race.Racers|" + Json.SaveToString(self._trackPlayers));}
+        if (!Network.IsMasterClient) {return;}
+        state = Dict();
+        state.Set("Players", self._trackPlayers);
+        state.Set("Progress", self._progress);
+        state.Set("Colors", self._colorSlots);
+        self._rankingsDirty = false;
+        Network.SendMessageAll("Race.Racers|" + Json.SaveToString(state));
+    }
+
+    function SyncRankings()
+    {
+        if (!Network.IsMasterClient || !self._rankingsDirty) {return;}
+        self._rankingsDirty = false;
+        Network.SendMessageAll("Race.Rankings|" + Json.SaveToString(self._progress));
     }
 
     function OnSecond()
     {
+        if (Network.IsMasterClient && self._raceStarted) {self.SyncRankings();}
         if (self._prepStarted)
         {
             if (self._prepTimer > 0)
             {
-                UI.SetLabelForTime(UILabelEnum.BottomCenter, "Kill race starts in " + self._prepTimer + String.Newline + String.Newline, 1.1);
+                timerText = "<b><color=#ff67ff>KILL RACE</color></b>" + String.Newline +
+                    "<color=#ffffff>Starts in </color><color=#ffd43b><b>" + self._prepTimer + "</b></color><color=#ffffff>s</color>" +
+                    String.Newline + String.Newline + String.Newline + String.Newline;
+                UI.SetLabelForTime(UILabelEnum.BottomCenter, timerText, 1.1);
                 self._prepTimer -= 1;
             }
             if (Network.IsMasterClient && self._prepTimer <= 0)
@@ -4262,6 +4348,7 @@ extension Race
         self._processedTitans.Add(victim);
         value = Convert.ToInt(self._progress.Get(key, 0)) + 1;
         self._progress.Set(key, value);
+        self._rankingsDirty = true;
         if (killer.Player == Network.MyPlayer) {self._trackedKills = value;}
         Network.SendMessage(killer.Player, "Race.Progress|" + value);
         if (value >= self._killsToWin) {self.EndHost(killer.Player);}
@@ -4269,8 +4356,10 @@ extension Race
 
     function OnPlayerSpawn(player, character)
     {
-        if (player == null || character == null || !self._trackPlayers.Contains(Convert.ToString(player.ID))) {return;}
-        character.AddOutline(Color("#ff67ff"), OutlineModeEnum.OutlineVisible);
+        if (player == null || character == null) {return;}
+        key = Convert.ToString(player.ID);
+        if (!self._trackPlayers.Contains(key)) {return;}
+        character.AddOutline(RaceVisuals.GetColor(self._colorSlots.Get(key, -1)), OutlineModeEnum.OutlineVisible);
     }
 
     function OnPlayerLeave(player)
@@ -4279,6 +4368,7 @@ extension Race
         key = Convert.ToString(player.ID);
         if (self._trackPlayers.Contains(key)) {self._trackPlayers.Remove(key);}
         if (self._progress.Contains(key)) {self._progress.Remove(key);}
+        if (self._colorSlots.Contains(key)) {self._colorSlots.Remove(key);}
         self.SyncRacers();
         if (self._raceStarted && self._trackPlayers.Count < 2) {self.EndHost(self.GetRemainingPlayer());}
     }
@@ -4300,12 +4390,48 @@ extension Race
 
     function ApplyOutlines()
     {
-        text = "<b>Active Kill Racers</b>" + String.Newline;
         for (key in self._trackPlayers.Keys)
         {
-            text += self._trackPlayers.Get(key) + String.Newline;
             player = Network.FindPlayer(Convert.ToInt(key));
-            if (player != null && player.Character != null) {player.Character.AddOutline(Color("#ff67ff"), OutlineModeEnum.OutlineVisible);}
+            if (player != null && player.Character != null)
+            {
+                player.Character.AddOutline(RaceVisuals.GetColor(self._colorSlots.Get(key, -1)), OutlineModeEnum.OutlineVisible);
+            }
+        }
+    }
+
+    function CompareRankKeys(a, b)
+    {
+        aScore = Convert.ToInt(self._progress.Get(a, 0));
+        bScore = Convert.ToInt(self._progress.Get(b, 0));
+        if (aScore > bScore) {return -1;}
+        if (aScore < bScore) {return 1;}
+        aID = Convert.ToInt(a);
+        bID = Convert.ToInt(b);
+        if (aID < bID) {return -1;}
+        if (aID > bID) {return 1;}
+        return 0;
+    }
+
+    function UpdateTrackedKills()
+    {
+        key = Convert.ToString(Network.MyPlayer.ID);
+        self._trackedKills = Convert.ToInt(self._progress.Get(key, 0));
+    }
+
+    function UpdateRaceList()
+    {
+        keys = self._trackPlayers.Keys.Copy();
+        keys.SortCustom(self.CompareRankKeys);
+        text = "<b><color=#ff67ff>KILL RACE</color></b> <color=#ffd43b>First to " + self._killsToWin + "</color>" + String.Newline;
+        rank = 1;
+        for (key in keys)
+        {
+            color = RaceVisuals.GetColorHex(self._colorSlots.Get(key, -1));
+            score = Convert.ToInt(self._progress.Get(key, 0));
+            text += "<color=" + color + "><b>#" + rank + "</b></color> " + self._trackPlayers.Get(key) +
+                " <color=#e2e8f0>- " + score + "/" + self._killsToWin + " kills</color>" + String.Newline;
+            rank += 1;
         }
         UI.SetLabel(UILabelEnum.MiddleLeft, text);
     }
@@ -4329,16 +4455,18 @@ extension Race
         self._countUpTimer = 0;
         self._trackPlayers.Clear();
         self._progress.Clear();
+        self._colorSlots.Clear();
         self._processedTitans.Clear();
+        self._rankingsDirty = false;
         UI.SetLabel(UILabelEnum.MiddleLeft, "");
     }
 }
 
 # ##############################################################################
-# BUILD UNIT 016/068 | MODULE | DmgRace.cl
+# BUILD UNIT 017/069 | MODULE | DmgRace.cl
 # REPOSITORY PATH: server/src/systems/racing/DmgRace.cl
 # DECLARATIONS: extension DmgRace
-# SOURCE LINES: 1-232
+# SOURCE LINES: 1-314
 # ##############################################################################
 extension DmgRace
 {
@@ -4352,6 +4480,7 @@ extension DmgRace
     _trackedDmg = 0;
     _trackPlayers = Dict();
     _progress = Dict();
+    _colorSlots = Dict();
     _dirtyProgress = Set();
     _countUpTimer = 0;
     _dmgToWin = 50000;
@@ -4390,9 +4519,29 @@ extension DmgRace
             elif (rpc == "DmgRace.Racers" && args.Count >= 2)
             {
                 self.RemoveOutlines();
-                racers = Json.LoadFromString(args.Get(1));
-                if (racers != null) {self._trackPlayers = racers;}
+                state = Json.LoadFromString(args.Get(1));
+                if (state != null)
+                {
+                    racers = state.Get("Players", null);
+                    progress = state.Get("Progress", null);
+                    colors = state.Get("Colors", null);
+                    if (racers != null) {self._trackPlayers = racers;}
+                    if (progress != null) {self._progress = progress;}
+                    if (colors != null) {self._colorSlots = colors;}
+                    self.UpdateTrackedDamage();
+                }
                 self.ApplyOutlines();
+                self.UpdateRaceList();
+            }
+            elif (rpc == "DmgRace.Rankings" && args.Count >= 2)
+            {
+                progress = Json.LoadFromString(args.Get(1));
+                if (progress != null)
+                {
+                    self._progress = progress;
+                    self.UpdateTrackedDamage();
+                    self.UpdateRaceList();
+                }
             }
             elif (rpc == "DmgRace.Start")
             {
@@ -4440,13 +4589,30 @@ extension DmgRace
     {
         if (player == null) {return;}
         key = Convert.ToString(player.ID);
+        if (self._trackPlayers.Contains(key))
+        {
+            self._trackPlayers.Set(key, player.Name);
+            return;
+        }
         self._trackPlayers.Set(key, player.Name);
         self._progress.Set(key, 0);
+        self._colorSlots.Set(key, RaceVisuals.FindAvailableSlot(self._colorSlots));
     }
 
     function SyncRacers()
     {
-        if (Network.IsMasterClient) {Network.SendMessageAll("DmgRace.Racers|" + Json.SaveToString(self._trackPlayers));}
+        if (!Network.IsMasterClient) {return;}
+        state = Dict();
+        state.Set("Players", self._trackPlayers);
+        state.Set("Progress", self._progress);
+        state.Set("Colors", self._colorSlots);
+        Network.SendMessageAll("DmgRace.Racers|" + Json.SaveToString(state));
+    }
+
+    function SyncRankings()
+    {
+        if (!Network.IsMasterClient) {return;}
+        Network.SendMessageAll("DmgRace.Rankings|" + Json.SaveToString(self._progress));
     }
 
     function OnSecond()
@@ -4456,7 +4622,10 @@ extension DmgRace
         {
             if (self._prepTimer > 0)
             {
-                UI.SetLabelForTime(UILabelEnum.BottomCenter, "Damage race starts in " + self._prepTimer + String.Newline + String.Newline, 1.1);
+                timerText = "<b><color=#64d8ff>DAMAGE RACE</color></b>" + String.Newline +
+                    "<color=#ffffff>Starts in </color><color=#ffd43b><b>" + self._prepTimer + "</b></color><color=#ffffff>s</color>" +
+                    String.Newline + String.Newline + String.Newline + String.Newline;
+                UI.SetLabelForTime(UILabelEnum.BottomCenter, timerText, 1.1);
                 self._prepTimer -= 1;
             }
             if (Network.IsMasterClient && self._prepTimer <= 0)
@@ -4495,20 +4664,23 @@ extension DmgRace
 
     function FlushProgress()
     {
+        if (self._dirtyProgress.Count == 0) {return;}
         for (key in self._dirtyProgress.ToList())
         {
             player = Network.FindPlayer(Convert.ToInt(key));
             value = self._progress.Get(key, 0);
             if (player == Network.MyPlayer) {self._trackedDmg = value;}
-            if (player != null) {Network.SendMessage(player, "DmgRace.Progress|" + value);}
         }
         self._dirtyProgress.Clear();
+        self.SyncRankings();
     }
 
     function OnPlayerSpawn(player, character)
     {
-        if (player == null || character == null || !self._trackPlayers.Contains(Convert.ToString(player.ID))) {return;}
-        character.AddOutline(Color("#64d8ff"), OutlineModeEnum.OutlineVisible);
+        if (player == null || character == null) {return;}
+        key = Convert.ToString(player.ID);
+        if (!self._trackPlayers.Contains(key)) {return;}
+        character.AddOutline(RaceVisuals.GetColor(self._colorSlots.Get(key, -1)), OutlineModeEnum.OutlineVisible);
     }
 
     function OnPlayerLeave(player)
@@ -4517,6 +4689,7 @@ extension DmgRace
         key = Convert.ToString(player.ID);
         if (self._trackPlayers.Contains(key)) {self._trackPlayers.Remove(key);}
         if (self._progress.Contains(key)) {self._progress.Remove(key);}
+        if (self._colorSlots.Contains(key)) {self._colorSlots.Remove(key);}
         if (self._dirtyProgress.Contains(key)) {self._dirtyProgress.Remove(key);}
         self.SyncRacers();
         if (self._raceStarted && self._trackPlayers.Count < 2) {self.EndHost(self.GetRemainingPlayer());}
@@ -4539,12 +4712,48 @@ extension DmgRace
 
     function ApplyOutlines()
     {
-        text = "<b>Active Damage Racers</b>" + String.Newline;
         for (key in self._trackPlayers.Keys)
         {
-            text += self._trackPlayers.Get(key) + String.Newline;
             player = Network.FindPlayer(Convert.ToInt(key));
-            if (player != null && player.Character != null) {player.Character.AddOutline(Color("#64d8ff"), OutlineModeEnum.OutlineVisible);}
+            if (player != null && player.Character != null)
+            {
+                player.Character.AddOutline(RaceVisuals.GetColor(self._colorSlots.Get(key, -1)), OutlineModeEnum.OutlineVisible);
+            }
+        }
+    }
+
+    function CompareRankKeys(a, b)
+    {
+        aScore = Convert.ToInt(self._progress.Get(a, 0));
+        bScore = Convert.ToInt(self._progress.Get(b, 0));
+        if (aScore > bScore) {return -1;}
+        if (aScore < bScore) {return 1;}
+        aID = Convert.ToInt(a);
+        bID = Convert.ToInt(b);
+        if (aID < bID) {return -1;}
+        if (aID > bID) {return 1;}
+        return 0;
+    }
+
+    function UpdateTrackedDamage()
+    {
+        key = Convert.ToString(Network.MyPlayer.ID);
+        self._trackedDmg = Convert.ToInt(self._progress.Get(key, 0));
+    }
+
+    function UpdateRaceList()
+    {
+        keys = self._trackPlayers.Keys.Copy();
+        keys.SortCustom(self.CompareRankKeys);
+        text = "<b><color=#64d8ff>DAMAGE RACE</color></b> <color=#ffd43b>First to " + self._dmgToWin + "</color>" + String.Newline;
+        rank = 1;
+        for (key in keys)
+        {
+            color = RaceVisuals.GetColorHex(self._colorSlots.Get(key, -1));
+            score = Convert.ToInt(self._progress.Get(key, 0));
+            text += "<color=" + color + "><b>#" + rank + "</b></color> " + self._trackPlayers.Get(key) +
+                " <color=#e2e8f0>- " + score + "/" + self._dmgToWin + " damage</color>" + String.Newline;
+            rank += 1;
         }
         UI.SetLabel(UILabelEnum.MiddleLeft, text);
     }
@@ -4568,13 +4777,14 @@ extension DmgRace
         self._countUpTimer = 0;
         self._trackPlayers.Clear();
         self._progress.Clear();
+        self._colorSlots.Clear();
         self._dirtyProgress.Clear();
         UI.SetLabel(UILabelEnum.MiddleLeft, "");
     }
 }
 
 # ##############################################################################
-# BUILD UNIT 017/068 | MODULE | StaminaBar.cl
+# BUILD UNIT 018/069 | MODULE | StaminaBar.cl
 # REPOSITORY PATH: server/src/ui/StaminaBar.cl
 # DECLARATIONS: extension StaminaBar
 # SOURCE LINES: 1-76
@@ -4657,7 +4867,7 @@ extension StaminaBar
 }
 
 # ##############################################################################
-# BUILD UNIT 018/068 | MODULE | DirectionalAttack.cl
+# BUILD UNIT 019/069 | MODULE | DirectionalAttack.cl
 # REPOSITORY PATH: server/src/systems/combat/DirectionalAttack.cl
 # DECLARATIONS: extension DirectionalAttack
 # SOURCE LINES: 1-9
@@ -4673,7 +4883,7 @@ extension DirectionalAttack
 }
 
 # ##############################################################################
-# BUILD UNIT 019/068 | MODULE | GachaData.cl
+# BUILD UNIT 020/069 | MODULE | GachaData.cl
 # REPOSITORY PATH: server/src/data/GachaData.cl
 # DECLARATIONS: extension GachaData
 # SOURCE LINES: 1-181
@@ -4861,7 +5071,7 @@ extension GachaData
 }
 
 # ##############################################################################
-# BUILD UNIT 020/068 | MODULE | CardTrading.cl
+# BUILD UNIT 021/069 | MODULE | CardTrading.cl
 # REPOSITORY PATH: server/src/systems/trading/CardTrading.cl
 # DECLARATIONS: extension CardTrading
 # SOURCE LINES: 1-88
@@ -4956,14 +5166,14 @@ extension CardTrading
 }
 
 # ##############################################################################
-# BUILD UNIT 021/068 | MODULE | HandleBakery.cl
+# BUILD UNIT 022/069 | MODULE | HandleBakery.cl
 # REPOSITORY PATH: server/src/systems/bakery/HandleBakery.cl
 # DECLARATIONS: extension HandleBakery
 # SOURCE LINES: 1-337
 # ##############################################################################
 extension HandleBakery
 {
-    SellReward = 50;
+    SellReward = 200;
     InteractionDistance = 15.0;
     RequestCooldown = 0.25;
 
@@ -5300,7 +5510,7 @@ extension HandleBakery
 }
 
 # ##############################################################################
-# BUILD UNIT 022/068 | MODULE | BakeryItem.cl
+# BUILD UNIT 023/069 | MODULE | BakeryItem.cl
 # REPOSITORY PATH: server/src/systems/bakery/BakeryItem.cl
 # DECLARATIONS: class BakeryItem
 # SOURCE LINES: 1-11
@@ -5318,7 +5528,7 @@ class BakeryItem
 }
 
 # ##############################################################################
-# BUILD UNIT 023/068 | MODULE | Data.cl
+# BUILD UNIT 024/069 | MODULE | Data.cl
 # REPOSITORY PATH: server/src/data/Data.cl
 # DECLARATIONS: extension Data
 # SOURCE LINES: 1-7
@@ -5332,7 +5542,7 @@ extension Data
 }
 
 # ##############################################################################
-# BUILD UNIT 024/068 | MODULE | TVZone.cl
+# BUILD UNIT 025/069 | MODULE | TVZone.cl
 # REPOSITORY PATH: server/src/components/world/TVZone.cl
 # DECLARATIONS: component TVZone
 # SOURCE LINES: 1-16
@@ -5355,7 +5565,7 @@ component TVZone
 }
 
 # ##############################################################################
-# BUILD UNIT 025/068 | MODULE | Register.cl
+# BUILD UNIT 026/069 | MODULE | Register.cl
 # REPOSITORY PATH: server/src/systems/bakery/Register.cl
 # DECLARATIONS: component Register
 # SOURCE LINES: 1-13
@@ -5375,7 +5585,7 @@ component Register
 }
 
 # ##############################################################################
-# BUILD UNIT 026/068 | MODULE | Oven.cl
+# BUILD UNIT 027/069 | MODULE | Oven.cl
 # REPOSITORY PATH: server/src/systems/bakery/Oven.cl
 # DECLARATIONS: component Oven
 # SOURCE LINES: 1-13
@@ -5395,7 +5605,7 @@ component Oven
 }
 
 # ##############################################################################
-# BUILD UNIT 027/068 | MODULE | ProofZone.cl
+# BUILD UNIT 028/069 | MODULE | ProofZone.cl
 # REPOSITORY PATH: server/src/systems/bakery/ProofZone.cl
 # DECLARATIONS: component ProofZone
 # SOURCE LINES: 1-13
@@ -5415,7 +5625,7 @@ component ProofZone
 }
 
 # ##############################################################################
-# BUILD UNIT 028/068 | MODULE | IngredientZone.cl
+# BUILD UNIT 029/069 | MODULE | IngredientZone.cl
 # REPOSITORY PATH: server/src/systems/bakery/IngredientZone.cl
 # DECLARATIONS: component IngredientZone
 # SOURCE LINES: 1-14
@@ -5436,7 +5646,7 @@ component IngredientZone
 }
 
 # ##############################################################################
-# BUILD UNIT 029/068 | MODULE | WaterZone.cl
+# BUILD UNIT 030/069 | MODULE | WaterZone.cl
 # REPOSITORY PATH: server/src/systems/bakery/WaterZone.cl
 # DECLARATIONS: component WaterZone
 # SOURCE LINES: 1-14
@@ -5457,7 +5667,7 @@ component WaterZone
 }
 
 # ##############################################################################
-# BUILD UNIT 030/068 | MODULE | MixingZone.cl
+# BUILD UNIT 031/069 | MODULE | MixingZone.cl
 # REPOSITORY PATH: server/src/systems/bakery/MixingZone.cl
 # DECLARATIONS: component MixingZone
 # SOURCE LINES: 1-13
@@ -5477,7 +5687,7 @@ component MixingZone
 }
 
 # ##############################################################################
-# BUILD UNIT 031/068 | MODULE | KneadingZone.cl
+# BUILD UNIT 032/069 | MODULE | KneadingZone.cl
 # REPOSITORY PATH: server/src/systems/bakery/KneadingZone.cl
 # DECLARATIONS: component KneadingZone
 # SOURCE LINES: 1-13
@@ -5497,7 +5707,7 @@ component KneadingZone
 }
 
 # ##############################################################################
-# BUILD UNIT 032/068 | MODULE | FistFight.cl
+# BUILD UNIT 033/069 | MODULE | FistFight.cl
 # REPOSITORY PATH: server/src/systems/combat/FistFight.cl
 # DECLARATIONS: component FistFight
 # SOURCE LINES: 1-126
@@ -5630,7 +5840,7 @@ component FistFight
 }
 
 # ##############################################################################
-# BUILD UNIT 033/068 | MODULE | Guillotine.cl
+# BUILD UNIT 034/069 | MODULE | Guillotine.cl
 # REPOSITORY PATH: server/src/systems/combat/Guillotine.cl
 # DECLARATIONS: component Guillotine
 # SOURCE LINES: 1-72
@@ -5709,7 +5919,7 @@ component Guillotine
 }
 
 # ##############################################################################
-# BUILD UNIT 034/068 | MODULE | GuillotineButton.cl
+# BUILD UNIT 035/069 | MODULE | GuillotineButton.cl
 # REPOSITORY PATH: server/src/systems/combat/GuillotineButton.cl
 # DECLARATIONS: component GuillotineButton
 # SOURCE LINES: 1-37
@@ -5753,7 +5963,7 @@ component GuillotineButton
 }
 
 # ##############################################################################
-# BUILD UNIT 035/068 | MODULE | Slots.cl
+# BUILD UNIT 036/069 | MODULE | Slots.cl
 # REPOSITORY PATH: server/src/systems/casino/Slots.cl
 # DECLARATIONS: component Slots
 # SOURCE LINES: 1-246
@@ -6006,7 +6216,7 @@ component Slots
 }
 
 # ##############################################################################
-# BUILD UNIT 036/068 | MODULE | Bank.cl
+# BUILD UNIT 037/069 | MODULE | Bank.cl
 # REPOSITORY PATH: server/src/systems/casino/Bank.cl
 # DECLARATIONS: component Bank
 # SOURCE LINES: 1-165
@@ -6178,7 +6388,7 @@ component Bank
 }
 
 # ##############################################################################
-# BUILD UNIT 037/068 | MODULE | BlackJack.cl
+# BUILD UNIT 038/069 | MODULE | BlackJack.cl
 # REPOSITORY PATH: server/src/systems/casino/BlackJack.cl
 # DECLARATIONS: component BlackJack
 # SOURCE LINES: 1-423
@@ -6608,7 +6818,7 @@ component BlackJack
 }
 
 # ##############################################################################
-# BUILD UNIT 038/068 | MODULE | CoinMachine.cl
+# BUILD UNIT 039/069 | MODULE | CoinMachine.cl
 # REPOSITORY PATH: server/src/systems/casino/CoinMachine.cl
 # DECLARATIONS: component CoinMachine
 # SOURCE LINES: 1-209
@@ -6824,7 +7034,7 @@ component CoinMachine
 }
 
 # ##############################################################################
-# BUILD UNIT 039/068 | MODULE | DicePoker.cl
+# BUILD UNIT 040/069 | MODULE | DicePoker.cl
 # REPOSITORY PATH: server/src/systems/casino/DicePoker.cl
 # DECLARATIONS: component DicePoker
 # SOURCE LINES: 1-349
@@ -7180,7 +7390,7 @@ component DicePoker
 }
 
 # ##############################################################################
-# BUILD UNIT 040/068 | MODULE | RankingEnums.cl
+# BUILD UNIT 041/069 | MODULE | RankingEnums.cl
 # REPOSITORY PATH: server/src/systems/casino/RankingEnums.cl
 # DECLARATIONS: extension RankingEnums
 # SOURCE LINES: 1-12
@@ -7199,7 +7409,7 @@ extension RankingEnums
 ##Poker
 
 # ##############################################################################
-# BUILD UNIT 041/068 | MODULE | TexasHoldEmPoker.cl
+# BUILD UNIT 042/069 | MODULE | TexasHoldEmPoker.cl
 # REPOSITORY PATH: server/src/systems/casino/TexasHoldEmPoker.cl
 # DECLARATIONS: component TexasHoldEmPoker
 # SOURCE LINES: 1-1012
@@ -7951,8 +8161,8 @@ component TexasHoldEmPoker
     {
         recipients = Set();
         for (playerID in self.GetSeatedPlayerIDs()) {recipients.Add(playerID);}
-        for (playerID in self._viewers) {recipients.Add(playerID);}
-        for (playerID in recipients)
+        for (playerID in self._viewers.ToList()) {recipients.Add(playerID);}
+        for (playerID in recipients.ToList())
         {
             player = Network.FindPlayer(playerID);
             if (player != null) {self.SendState(player, message, reveal);}
@@ -8218,7 +8428,7 @@ component TexasHoldEmPoker
 }
 
 # ##############################################################################
-# BUILD UNIT 042/068 | MODULE | PokerSeat.cl
+# BUILD UNIT 043/069 | MODULE | PokerSeat.cl
 # REPOSITORY PATH: server/src/systems/casino/PokerSeat.cl
 # DECLARATIONS: component PokerSeat
 # SOURCE LINES: 1-40
@@ -8265,7 +8475,7 @@ component PokerSeat
 }
 
 # ##############################################################################
-# BUILD UNIT 043/068 | MODULE | DamageOverTime.cl
+# BUILD UNIT 044/069 | MODULE | DamageOverTime.cl
 # REPOSITORY PATH: server/src/systems/combat/DamageOverTime.cl
 # DECLARATIONS: component DamageOverTime
 # SOURCE LINES: 1-115
@@ -8387,7 +8597,7 @@ component DamageOverTime
 }
 
 # ##############################################################################
-# BUILD UNIT 044/068 | MODULE | DamageOverTimeEffect.cl
+# BUILD UNIT 045/069 | MODULE | DamageOverTimeEffect.cl
 # REPOSITORY PATH: server/src/systems/combat/DamageOverTimeEffect.cl
 # DECLARATIONS: component DamageOverTimeEffect
 # SOURCE LINES: 1-14
@@ -8408,7 +8618,7 @@ component DamageOverTimeEffect
 }
 
 # ##############################################################################
-# BUILD UNIT 045/068 | MODULE | FastTravel.cl
+# BUILD UNIT 046/069 | MODULE | FastTravel.cl
 # REPOSITORY PATH: server/src/components/world/FastTravel.cl
 # DECLARATIONS: component FastTravel
 # SOURCE LINES: 1-108
@@ -8523,7 +8733,7 @@ component FastTravel
 }
 
 # ##############################################################################
-# BUILD UNIT 046/068 | MODULE | StatChanger.cl
+# BUILD UNIT 047/069 | MODULE | StatChanger.cl
 # REPOSITORY PATH: server/src/components/player/StatChanger.cl
 # DECLARATIONS: component StatChanger
 # SOURCE LINES: 1-114
@@ -8644,7 +8854,7 @@ component StatChanger
 }
 
 # ##############################################################################
-# BUILD UNIT 047/068 | MODULE | SpectateSpeedActive.cl
+# BUILD UNIT 048/069 | MODULE | SpectateSpeedActive.cl
 # REPOSITORY PATH: server/src/components/player/SpectateSpeedActive.cl
 # DECLARATIONS: component zzz_SpectateSpeed_Active
 # SOURCE LINES: 1-46
@@ -8697,7 +8907,7 @@ component zzz_SpectateSpeed_Active
 }
 
 # ##############################################################################
-# BUILD UNIT 048/068 | MODULE | SpectateSpeedManager.cl
+# BUILD UNIT 049/069 | MODULE | SpectateSpeedManager.cl
 # REPOSITORY PATH: server/src/components/player/SpectateSpeedManager.cl
 # DECLARATIONS: component zzz_SpectateSpeed_Manager
 # SOURCE LINES: 1-19
@@ -8723,7 +8933,7 @@ component zzz_SpectateSpeed_Manager
 }
 
 # ##############################################################################
-# BUILD UNIT 049/068 | MODULE | InfiniteResourceSettings.cl
+# BUILD UNIT 050/069 | MODULE | InfiniteResourceSettings.cl
 # REPOSITORY PATH: server/src/components/player/InfiniteResourceSettings.cl
 # DECLARATIONS: component InfiniteResourceSettings
 # SOURCE LINES: 1-8
@@ -8738,7 +8948,7 @@ component InfiniteResourceSettings
 }
 
 # ##############################################################################
-# BUILD UNIT 050/068 | MODULE | InfiniteResourceActive.cl
+# BUILD UNIT 051/069 | MODULE | InfiniteResourceActive.cl
 # REPOSITORY PATH: server/src/components/player/InfiniteResourceActive.cl
 # DECLARATIONS: component __InfiniteResource_Active
 # SOURCE LINES: 1-27
@@ -8772,7 +8982,7 @@ component __InfiniteResource_Active
 }
 
 # ##############################################################################
-# BUILD UNIT 051/068 | MODULE | InfiniteResourceInactive.cl
+# BUILD UNIT 052/069 | MODULE | InfiniteResourceInactive.cl
 # REPOSITORY PATH: server/src/components/player/InfiniteResourceInactive.cl
 # DECLARATIONS: component __InfiniteResource_Inactive
 # SOURCE LINES: 1-9
@@ -8788,7 +8998,7 @@ component __InfiniteResource_Inactive
 }
 
 # ##############################################################################
-# BUILD UNIT 052/068 | MODULE | Gacha.cl
+# BUILD UNIT 053/069 | MODULE | Gacha.cl
 # REPOSITORY PATH: server/src/systems/gacha/Gacha.cl
 # DECLARATIONS: component Gacha
 # SOURCE LINES: 1-444
@@ -9239,7 +9449,7 @@ component Gacha
 }
 
 # ##############################################################################
-# BUILD UNIT 053/068 | MODULE | Inventory.cl
+# BUILD UNIT 054/069 | MODULE | Inventory.cl
 # REPOSITORY PATH: server/src/ui/Inventory.cl
 # DECLARATIONS: component Inventory
 # SOURCE LINES: 1-120
@@ -9366,7 +9576,7 @@ component Inventory
 }
 
 # ##############################################################################
-# BUILD UNIT 054/068 | MODULE | UITooltip.cl
+# BUILD UNIT 055/069 | MODULE | UITooltip.cl
 # REPOSITORY PATH: server/src/ui/UITooltip.cl
 # DECLARATIONS: component UITooltip
 # SOURCE LINES: 1-44
@@ -9417,7 +9627,7 @@ component UITooltip
 }
 
 # ##############################################################################
-# BUILD UNIT 055/068 | MODULE | GachaItem.cl
+# BUILD UNIT 056/069 | MODULE | GachaItem.cl
 # REPOSITORY PATH: server/src/systems/gacha/GachaItem.cl
 # DECLARATIONS: class GachaItem
 # SOURCE LINES: 1-51
@@ -9475,7 +9685,7 @@ class GachaItem
 }
 
 # ##############################################################################
-# BUILD UNIT 056/068 | MODULE | GamePhaseEnum.cl
+# BUILD UNIT 057/069 | MODULE | GamePhaseEnum.cl
 # REPOSITORY PATH: server/src/systems/casino/GamePhaseEnum.cl
 # DECLARATIONS: extension GamePhaseEnum
 # SOURCE LINES: 1-7
@@ -9489,7 +9699,7 @@ extension GamePhaseEnum
 }
 
 # ##############################################################################
-# BUILD UNIT 057/068 | MODULE | RankingEnum.cl
+# BUILD UNIT 058/069 | MODULE | RankingEnum.cl
 # REPOSITORY PATH: server/src/systems/casino/RankingEnum.cl
 # DECLARATIONS: extension RankingEnum
 # SOURCE LINES: 1-14
@@ -9510,7 +9720,7 @@ extension RankingEnum
 }
 
 # ##############################################################################
-# BUILD UNIT 058/068 | MODULE | Utils.cl
+# BUILD UNIT 059/069 | MODULE | Utils.cl
 # REPOSITORY PATH: server/src/systems/casino/Utils.cl
 # DECLARATIONS: extension Utils
 # SOURCE LINES: 1-64
@@ -9581,7 +9791,7 @@ extension Utils
 ##chez ones
 
 # ##############################################################################
-# BUILD UNIT 059/068 | MODULE | SpectateSpeedSingleton.cl
+# BUILD UNIT 060/069 | MODULE | SpectateSpeedSingleton.cl
 # REPOSITORY PATH: server/src/components/player/SpectateSpeedSingleton.cl
 # DECLARATIONS: extension SpectateSpeedSingleton
 # SOURCE LINES: 1-18
@@ -9606,7 +9816,7 @@ extension SpectateSpeedSingleton
 }
 
 # ##############################################################################
-# BUILD UNIT 060/068 | MODULE | InfiniteResourceSingleton.cl
+# BUILD UNIT 061/069 | MODULE | InfiniteResourceSingleton.cl
 # REPOSITORY PATH: server/src/components/player/InfiniteResourceSingleton.cl
 # DECLARATIONS: extension InfiniteResourceSingleton
 # SOURCE LINES: 1-53
@@ -9666,7 +9876,7 @@ extension InfiniteResourceSingleton
 }
 
 # ##############################################################################
-# BUILD UNIT 061/068 | MODULE | Interface.cl
+# BUILD UNIT 062/069 | MODULE | Interface.cl
 # REPOSITORY PATH: server/src/ui/Interface.cl
 # DECLARATIONS: extension Interface
 # SOURCE LINES: 1-71
@@ -9744,7 +9954,7 @@ extension Interface
 }
 
 # ##############################################################################
-# BUILD UNIT 062/068 | MODULE | Activatable.cl
+# BUILD UNIT 063/069 | MODULE | Activatable.cl
 # REPOSITORY PATH: server/src/components/activation/Activatable.cl
 # DECLARATIONS: component Activatable
 # SOURCE LINES: 1-14
@@ -9765,7 +9975,7 @@ component Activatable
 }
 
 # ##############################################################################
-# BUILD UNIT 063/068 | MODULE | ActivationComponents.cl
+# BUILD UNIT 064/069 | MODULE | ActivationComponents.cl
 # REPOSITORY PATH: server/src/components/activation/ActivationComponents.cl
 # DECLARATIONS: component DistanceButton
 # SOURCE LINES: 1-48
@@ -9820,7 +10030,7 @@ component DistanceButton
 }
 
 # ##############################################################################
-# BUILD UNIT 064/068 | MODULE | RegionButton.cl
+# BUILD UNIT 065/069 | MODULE | RegionButton.cl
 # REPOSITORY PATH: server/src/components/activation/RegionButton.cl
 # DECLARATIONS: component RegionButton
 # SOURCE LINES: 1-53
@@ -9880,7 +10090,7 @@ component RegionButton
 }
 
 # ##############################################################################
-# BUILD UNIT 065/068 | MODULE | ActiveControl.cl
+# BUILD UNIT 066/069 | MODULE | ActiveControl.cl
 # REPOSITORY PATH: server/src/components/activation/ActiveControl.cl
 # DECLARATIONS: component ActiveControl
 # SOURCE LINES: 1-68
@@ -9955,7 +10165,7 @@ component ActiveControl
 }
 
 # ##############################################################################
-# BUILD UNIT 066/068 | MODULE | Timer.cl
+# BUILD UNIT 067/069 | MODULE | Timer.cl
 # REPOSITORY PATH: server/src/core/Timer.cl
 # DECLARATIONS: class Timer
 # SOURCE LINES: 1-26
@@ -9988,7 +10198,7 @@ class Timer
 }
 
 # ##############################################################################
-# BUILD UNIT 067/068 | GENERATED ASSET | Sprites.generated.cl
+# BUILD UNIT 068/069 | GENERATED ASSET | Sprites.generated.cl
 # REPOSITORY PATH: server/assets/gacha/Sprites.generated.cl
 # DECLARATIONS: extension Sprites
 # SOURCE LINES: 1-4670
@@ -14665,7 +14875,7 @@ extension Sprites
 }
 
 # ##############################################################################
-# BUILD UNIT 068/068 | GENERATED ASSET | Descriptions.generated.cl
+# BUILD UNIT 069/069 | GENERATED ASSET | Descriptions.generated.cl
 # REPOSITORY PATH: server/assets/gacha/Descriptions.generated.cl
 # DECLARATIONS: extension DescriptionsEnum
 # SOURCE LINES: 1-64
